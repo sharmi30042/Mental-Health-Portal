@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Find a Therapist</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; }
+        .card { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; }
+        .spec { color: #27ae60; font-weight: bold; }
+        .btn-book { background-color: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Available Therapists</h1>
+    <div id="therapist-list">Loading therapists...</div>
+
+    <script>
+        // Fetch data from your Spring Boot Controller
+        fetch('/api/therapists')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('therapist-list');
+                list.innerHTML = ''; // Clear loading text
+                
+                data.forEach(t => {
+                    const card = `
+                        <div class="card">
+                            <h2>${t.name}</h2>
+                            <p class="spec">Specialization: ${t.specialization}</p>
+                            <p>Language: ${t.language}</p>
+                            <p>Availability: ${t.availability}</p>
+                            <button class="btn-book" onclick="location.href='booking.html?id=${t.id}&name=${t.name}'">Book Session</button>
+                        </div>
+                    `;
+                    list.innerHTML += card;
+                });
+            })
+            .catch(error => {
+                document.getElementById('therapist-list').innerHTML = 'Error loading data. Make sure the backend is running!';
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

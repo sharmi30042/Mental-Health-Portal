@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mental Health Assessment</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background-color: #f4f7f6; }
+        .quiz-container { background: white; padding: 30px; border-radius: 10px; max-width: 650px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: #ddd; margin-right: 5px; border-radius: 5px; }
+        .active-tab { background: #3498db; color: white; }
+        .question-block { margin-top: 20px; }
+        .q-text { margin-bottom: 8px; font-weight: 500; }
+        select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; }
+        .btn-submit { background-color: #27ae60; color: white; width: 100%; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 20px; }
+        #result-box { margin-top: 25px; padding: 20px; border-radius: 5px; display: none; text-align: center; border: 2px solid #27ae60; background: #f0fff4; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div style="text-align:center; margin-bottom:20px;">
+            <button id="phq-btn" class="tab-btn active-tab" onclick="switchTab('PHQ-9')">Depression (PHQ-9)</button>
+            <button id="gad-btn" class="tab-btn" onclick="switchTab('GAD-7')">Anxiety (GAD-7)</button>
+        </div>
+
+        <h1 id="test-title">PHQ-9 Assessment</h1>
+        <div id="questions-area">
+            </div>
+
+        <button class="btn-submit" onclick="processAssessment()">Submit Assessment</button>
+
+        <div id="result-box">
+            <h2 id="severity-text"></h2>
+            <p id="score-text"></p>
+            <button class="tab-btn" onclick="location.href='therapists.html'" style="background:#3498db; color:white; margin-top:10px;">Find a Therapist</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTest = "PHQ-9";
+        const questions = {
+        	    "PHQ-9": [
+        	        "Little interest or pleasure in doing things?", 
+        	        "Feeling down, depressed, or hopeless?", 
+        	        "Trouble falling or staying asleep?", 
+        	        "Feeling tired or having little energy?",
+        	        "Poor appetite or overeating?",
+        	        "Feeling bad about yourself?",
+        	        "Trouble concentrating on things?",
+        	        "Moving or speaking slowly/being fidgety?",
+        	        "Thoughts that you would be better off dead?"
+        	    ],
+        	    "GAD-7": [
+        	        "Feeling nervous, anxious, or on edge?", 
+        	        "Not being able to stop or control worrying?", 
+        	        "Worrying too much about different things?", 
+        	        "Trouble relaxing?",
+        	        "Being so restless that it is hard to sit still?",
+        	        "Becoming easily annoyed or irritable?",
+        	        "Feeling afraid as if something awful might happen?"
+        	    ]
+        	};
+
+        function switchTab(type) {
+            currentTest = type;
+            document.getElementById('test-title').innerText = type + " Assessment";
+            document.getElementById('phq-btn').classList.toggle('active-tab', type === 'PHQ-9');
+            document.getElementById('gad-btn').classList.toggle('active-tab', type === 'GAD-7');
+            loadQuestions();
+        }
+
+        function loadQuestions() {
+            const area = document.getElementById('questions-area');
+            area.innerHTML = questions[currentTest].map((q, i) => `
+                <div class="question-block">
+                    <div class="q-text">${i+1}. ${q}</div>
+                    <select class="ans-input">
+                        <option value="0">Not at all</option>
+                        <option value="1">Several days</option>
+                        <option value="2">More than half the days</option>
+                        <option value="3">Nearly every day</option>
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function processAssessment() {
+            let total = 0;
+            document.querySelectorAll('.ans-input').forEach(input => total += parseInt(input.value));
+
+            fetch('/api/assessments/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: currentTest, score: total })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const resultBox = document.getElementById('result-box');
+                const severity = data.severity; // i.e., "Severe", "Moderate", etc.
+                
+                // Define colors for each severity level
+                let bgColor = "#ffffff"; 
+                let textColor = "#000000";
+
+                if (severity.includes("Severe")) {
+                    bgColor = "#f8d7da"; // Light Red
+                    textColor = "#721c24"; // Dark Red
+                } else if (severity.includes("Moderate")) {
+                    bgColor = "#fff3cd"; // Yellow/Orange
+                    textColor = "#856404"; 
+                } else if (severity.includes("Mild")) {
+                    bgColor = "#d1ecf1"; // Light Blue
+                    textColor = "#0c5460";
+                } else {
+                    bgColor = "#d4edda"; // Green for Minimal
+                    textColor = "#155724";
+                }
+
+                // Apply styles and show result
+                resultBox.style.display = 'block';
+                resultBox.style.backgroundColor = bgColor;
+                resultBox.style.color = textColor;
+                resultBox.style.borderColor = textColor;
+                
+                document.getElementById('severity-text').innerText = "Result: " + severity;
+                document.getElementById('score-text').innerText = "Your total " + currentTest + " score is " + data.score;
+            });
+        }
+
+        loadQuestions(); // Initial load
+    </script>
+</body>
+</html>

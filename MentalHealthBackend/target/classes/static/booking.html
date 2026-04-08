@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book your Session</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 40px; background-color: #f4f7f6; }
+        .booking-container { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn-confirm { background-color: #3498db; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="booking-container">
+        <h2>Schedule Your Session</h2>
+        <p id="selected-therapist">Booking with: <b>Loading...</b></p>
+        
+        <label>Select Date:</label>
+        <input type="date" id="bookingDate">
+        
+        <label>Select Time Slot:</label>
+        <select id="timeSlot">
+            <option>10:00 AM</option>
+            <option>11:00 AM</option>
+            <option>02:00 PM</option>
+            <option>04:00 PM</option>
+        </select>
+
+        <label>Notes for Therapist (Optional):</label>
+        <textarea id="notes" rows="3" placeholder="Describe how you're feeling..."></textarea>
+
+        <button class="btn-confirm" onclick="confirmBooking()">Confirm Appointment</button>
+    </div>
+
+    <script>
+        // Get therapist info from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const tId = urlParams.get('id');
+        const tName = urlParams.get('name');
+        document.getElementById('selected-therapist').innerHTML = `Booking with: <b>${tName}</b>`;
+
+        function confirmBooking() {
+            const bookingData = {
+                therapistId: tId,
+                sessionTime: document.getElementById('bookingDate').value + "T" + "10:00:00", // Simplified for demo
+                encryptedNotes: document.getElementById('notes').value
+            };
+
+            fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookingData)
+            })
+            .then(res => {
+                if(res.ok) {
+                    alert("Success! Your session is booked.");
+                    window.location.href = "index.html";
+                } else {
+                    alert("Error: This slot might already be taken.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
